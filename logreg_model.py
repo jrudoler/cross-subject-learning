@@ -35,51 +35,16 @@ N_CPU = multiprocessing.cpu_count()
 log_dir = "/Users/jrudoler/Library/CloudStorage/Box-Box/JR_CML/pytorch_logs/"
 
 
-class LitPrecondition(pl.LightningModule):
-    def __init__(
-        self, input_dim, output_dim, learning_rate, weight_decay, batch_size
-    ):
+class LitLogisticRegression(pl.LightningModule):
+    def __init__(self, input_dim, learning_rate, weight_decay, batch_size):
         super().__init__()
-        if output_dim is None:
-            output_dim = input_dim
-        self.condition = nn.Sequential(
-            nn.Conv1d(
-                in_channels=input_dim,
-                out_channels=2 * input_dim,
-                kernel_size=2,
-                padding=1,
-                groups=input_dim,
-            ),
-            nn.ReLU(),
-            nn.AvgPool1d(kernel_size=4),
-            nn.Conv1d(
-                in_channels=2 * input_dim,
-                out_channels=2 * input_dim,
-                kernel_size=4,
-                padding=1,
-                groups=2 * input_dim,
-            ),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=4),
-            nn.Conv1d(
-                in_channels=2 * input_dim,
-                out_channels=input_dim,
-                kernel_size=4,
-                padding=1,
-                groups=input_dim,
-            ),
-            nn.ReLU(),
-            nn.AvgPool1d(kernel_size=4),
-            nn.Flatten(),
-        )
         self.logistic = nn.Sequential(
-            nn.Linear(output_dim, 1, bias=True), nn.Sigmoid()
+            nn.Linear(input_dim, 1, bias=True), nn.Sigmoid()
         )
         self.save_hyperparameters()
 
     def forward(self, X):
-        X_cond = self.condition(X)
-        probs = self.logistic(X_cond)
+        probs = self.logistic(X)
         return probs
 
     def training_step(self, batch, batch_idx):
@@ -204,6 +169,7 @@ class ltpFR2DataModule(pl.LightningDataModule):
                 self.data_dir,
                 loader=partial(torch.load),
                 is_valid_file=self.test_file_crit,
+                transform=partial(torch.mean, dim=-1),
             )
             self.val_dataset, self.test_dataset = random_split(
                 self.test_dataset, [0.5, 0.5]
@@ -212,6 +178,7 @@ class ltpFR2DataModule(pl.LightningDataModule):
                 self.data_dir,
                 loader=partial(torch.load),
                 is_valid_file=self.train_file_crit,
+                transform=partial(torch.mean, dim=-1),
             )
             self.n_features = self.train_dataset[0][0].shape[0]
 
@@ -253,8 +220,7 @@ class ltpFR2DataModule(pl.LightningDataModule):
 
 
 @slack_sender(
-    "https://hooks.slack.com/services/T12C7244A/B0557G3Q7QU/\
-        Zsqbm9tmbQGXf2gYKnuX9WDr",
+    "https://hooks.slack.com/services/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",
     "D03SCTEJ0JJ",
 )
 def train_model(
@@ -287,22 +253,18 @@ def train_model(
             test_result += [{"subject": subject, "session": sess}]
             continue
         # create model
-        model = LitPrecondition(
-            dm.n_features,
-            dm.n_features,
-            learning_rate,
-            weight_decay,
-            batch_size,
+        model = LitLogisticRegression(
+            dm.n_features, learning_rate, weight_decay, batch_size
         )
         es = EarlyStopping(
-            "Loss/train", min_delta=1e-3, patience=25, mode="min"
+            "Loss/train", min_delta=1e-4, patience=25, mode="min"
         )
         lr_mtr = LearningRateMonitor("epoch")
         check = ModelCheckpoint(monitor="AUC/train", mode="max")
         run_dir = f"run_{subject}_{sess}_{timestr}"
         logger = TensorBoardLogger(
             save_dir=log_dir,
-            name=f"precondition_{across}",
+            name=f"logreg_{across}",
             version=run_dir,
             default_hp_metric=True,
         )
@@ -320,7 +282,7 @@ def train_model(
         trainer.fit(model, datamodule=dm)
         if fast_dev_run:
             return
-        model = LitPrecondition.load_from_checkpoint(
+        model = LitLogisticRegression.load_from_checkpoint(
             trainer.checkpoint_callback.best_model_path  # type: ignore
         )  # Load best checkpoint after training
         test_result += trainer.test(model, verbose=False, datamodule=dm)
@@ -330,7 +292,7 @@ def train_model(
         result_df.to_csv(
             log_dir
             + f"test_results/\
-            precond_{across}_results_LTP093_{weight_decay:.3e}_{timestr}.csv"
+            logreg_{across}_results_LTP093_{weight_decay:.3e}_{timestr}.csv"
         )
 
 
