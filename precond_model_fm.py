@@ -219,7 +219,7 @@ class ltpFR2DataModule(pl.LightningDataModule):
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
-            shuffle=False,
+            shuffle=True,
             pin_memory=True,
         )
 
@@ -285,6 +285,7 @@ def train_model(
     trainer = Trainer(
         min_epochs=50,
         max_epochs=300,
+        limit_val_batches=10,
         accelerator="mps",
         devices=1,
         callbacks=[lr_mtr, es, check],
@@ -299,7 +300,7 @@ def train_model(
     model = LitPrecondition.load_from_checkpoint(
         trainer.checkpoint_callback.best_model_path  # type: ignore
     )  # Load best checkpoint after training
-    torch.save(model, log_dir + f"foundation_model_{timestr}.pt")
+    torch.save(model, log_dir + f"models/foundation_model_{timestr}.pt")
     torch.mps.empty_cache()
 
 
