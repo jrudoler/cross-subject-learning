@@ -274,8 +274,8 @@ def train_model(
     for sess in range(n_sess):
         # data module
         dm = ltpFR2DataModule(
-            subject,
-            sess,
+            holdout_subject=subject,
+            holdout_session=sess,
             data_dir=data_dir,
             batch_size=batch_size,
             across=across,
