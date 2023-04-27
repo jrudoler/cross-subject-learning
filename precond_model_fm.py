@@ -274,7 +274,7 @@ def train_model(
         mode="min",
     )
     lr_mtr = LearningRateMonitor("epoch")
-    check = ModelCheckpoint(monitor="AUC/train", mode="max")
+    check = ModelCheckpoint(monitor="Loss/val", mode="min")
     run_dir = f"run_fm_{timestr}"
     logger = TensorBoardLogger(
         save_dir=log_dir,
