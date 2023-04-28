@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import warnings
 import logging
 import argparse
@@ -249,8 +250,9 @@ def train_model(
     learning_rate=1e-2,
     weight_decay=0.5,
     batch_size=512,
+    timestr=None,
 ):
-    timestr = time.strftime("%Y%m%d-%H%M%S")
+    timestr = timestr or time.strftime("%Y%m%d-%H%M%S")
     _ = pl.seed_everything(seed, workers=True)
 
     train_sess = list(set(range(n_sess)) - set(holdout_sess))
@@ -315,7 +317,7 @@ def train_model(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train model with given parameters.")
-    parser.add_argument("-m", "--model_path", help="pretrained model")
+    parser.add_argument("-m", "--model_path_init", help="pretrained model")
     parser.add_argument("-S", "--subject", nargs="+", help="subject(s) to fine tune")
     parser.add_argument(
         "--holdout",
@@ -350,12 +352,15 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--batch_size", type=int, default=512, help="batch size")
 
     args = parser.parse_args()
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    models_dir = log_dir + f"models/tuned_models_{timestr}/"
+    os.makedirs(models_dir)
     start = time.time()
     print(args.data_dir)
     print(args.subject)
     for subject in args.subject:
         train_model(
-            initial_model=args.model_path,
+            initial_model=args.model_path_init,
             subject=subject,
             holdout_sess=args.holdout,
             n_sess=args.n_sess,
@@ -365,6 +370,7 @@ if __name__ == "__main__":
             learning_rate=args.learning_rate,
             weight_decay=args.weight_decay,
             batch_size=args.batch_size,
+            timestr=timestr,
         )
     end = time.time()
     print(f"Done! (runtime: {timedelta(seconds=end-start)})")
