@@ -269,7 +269,6 @@ def train_model(
     model.hparams["learning_rate"] = learning_rate
     model.hparams["weight_decay"] = weight_decay
     model.hparams["batch_size"] = batch_size
-    model.save_
 
     es = EarlyStopping(
         "Loss/val",
@@ -286,6 +285,7 @@ def train_model(
         version=run_dir,
         default_hp_metric=True,
     )
+    logger.log_hyperparams(model.hparams)
     trainer = Trainer(
         min_epochs=10,
         max_epochs=300,
@@ -316,7 +316,7 @@ def train_model(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train model with given parameters.")
     parser.add_argument("-m", "--model_path", help="pretrained model")
-    parser.add_argument("-S", "--subject", help="subject to fine tune")
+    parser.add_argument("-S", "--subject", nargs="+", help="subject(s) to fine tune")
     parser.add_argument(
         "--holdout",
         nargs="+",
@@ -352,17 +352,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
     start = time.time()
     print(args.data_dir)
-    train_model(
-        initial_model=args.model_path,
-        subject=args.subject,
-        holdout_sess=args.holdout,
-        n_sess=args.n_sess,
-        data_dir=args.data_dir,
-        fast_dev_run=args.fast_dev_run,
-        seed=args.seed,
-        learning_rate=args.learning_rate,
-        weight_decay=args.weight_decay,
-        batch_size=args.batch_size,
-    )
+    print(args.subject)
+    for subject in args.subject:
+        train_model(
+            initial_model=args.model_path,
+            subject=subject,
+            holdout_sess=args.holdout,
+            n_sess=args.n_sess,
+            data_dir=args.data_dir,
+            fast_dev_run=args.fast_dev_run,
+            seed=args.seed,
+            learning_rate=args.learning_rate,
+            weight_decay=args.weight_decay,
+            batch_size=args.batch_size,
+        )
     end = time.time()
     print(f"Done! (runtime: {timedelta(seconds=end-start)})")
