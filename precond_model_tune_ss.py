@@ -289,7 +289,7 @@ def train_model(
     )
     logger.log_hyperparams(model.hparams)
     trainer = Trainer(
-        min_epochs=10,
+        min_epochs=50,
         max_epochs=300,
         limit_val_batches=10,
         accelerator="mps",
