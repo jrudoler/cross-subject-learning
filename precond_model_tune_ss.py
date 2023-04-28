@@ -10,6 +10,7 @@ import time
 from datetime import timedelta
 from functools import partial
 import multiprocessing
+import torch.multiprocessing
 import torch
 import torch.nn as nn
 from torchvision.datasets import DatasetFolder
@@ -28,6 +29,7 @@ import torch.nn.functional as F
 from torchmetrics.classification import BinaryAUROC
 from knockknock import slack_sender
 
+torch.multiprocessing.set_sharing_strategy("file_system")
 warnings.simplefilter("ignore", category=UserWarning)
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 logging.getLogger("torchvision.dataset").setLevel(logging.ERROR)

@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 from torchvision.datasets import DatasetFolder
 from torch.utils.data import DataLoader, WeightedRandomSampler  # , random_split
+import torch.multiprocessing
 from typing import Any
 import lightning.pytorch as pl
 from lightning.pytorch import Trainer
@@ -28,6 +29,7 @@ import torch.nn.functional as F
 from torchmetrics.classification import BinaryAUROC
 from knockknock import slack_sender
 
+torch.multiprocessing.set_sharing_strategy("file_system")
 warnings.simplefilter("ignore", category=UserWarning)
 logging.getLogger("lightning.pytorch").setLevel(logging.ERROR)
 logging.getLogger("torchvision.dataset").setLevel(logging.ERROR)
