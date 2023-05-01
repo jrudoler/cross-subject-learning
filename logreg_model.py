@@ -38,9 +38,7 @@ log_dir = "/Users/jrudoler/Library/CloudStorage/Box-Box/JR_CML/pytorch_logs/"
 class LitLogisticRegression(pl.LightningModule):
     def __init__(self, input_dim, learning_rate, weight_decay, batch_size):
         super().__init__()
-        self.logistic = nn.Sequential(
-            nn.Linear(input_dim, 1, bias=True), nn.Sigmoid()
-        )
+        self.logistic = nn.Sequential(nn.Linear(input_dim, 1, bias=True), nn.Sigmoid())
         self.save_hyperparameters()
 
     def forward(self, X):
@@ -219,10 +217,6 @@ class ltpFR2DataModule(pl.LightningDataModule):
         )
 
 
-@slack_sender(
-    "https://hooks.slack.com/services/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",
-    "D03SCTEJ0JJ",
-)
 def train_model(
     across="session",
     n_sess=24,
@@ -256,9 +250,7 @@ def train_model(
         model = LitLogisticRegression(
             dm.n_features, learning_rate, weight_decay, batch_size
         )
-        es = EarlyStopping(
-            "Loss/train", min_delta=1e-4, patience=25, mode="min"
-        )
+        es = EarlyStopping("Loss/train", min_delta=1e-4, patience=25, mode="min")
         lr_mtr = LearningRateMonitor("epoch")
         check = ModelCheckpoint(monitor="AUC/train", mode="max")
         run_dir = f"run_{subject}_{sess}_{timestr}"
@@ -297,12 +289,8 @@ def train_model(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Train model with given parameters."
-    )
-    parser.add_argument(
-        "-a", "--across", default="session", help="across sessions"
-    )
+    parser = argparse.ArgumentParser(description="Train model with given parameters.")
+    parser.add_argument("-a", "--across", default="session", help="across sessions")
     parser.add_argument(
         "-n", "--n_sess", type=int, default=24, help="number of sessions"
     )
@@ -319,18 +307,14 @@ if __name__ == "__main__":
         default=False,
         help="fast development run (bool or int)",
     )
-    parser.add_argument(
-        "-s", "--seed", type=int, default=56, help="random seed"
-    )
+    parser.add_argument("-s", "--seed", type=int, default=56, help="random seed")
     parser.add_argument(
         "-l", "--learning_rate", type=float, default=1e-2, help="learning rate"
     )
     parser.add_argument(
         "-w", "--weight_decay", type=float, default=0.5, help="weight decay"
     )
-    parser.add_argument(
-        "-b", "--batch_size", type=int, default=512, help="batch size"
-    )
+    parser.add_argument("-b", "--batch_size", type=int, default=512, help="batch size")
 
     args = parser.parse_args()
     start = time.time()

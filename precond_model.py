@@ -248,10 +248,6 @@ class ltpFR2DataModule(pl.LightningDataModule):
         )
 
 
-@slack_sender(
-    "https://hooks.slack.com/services/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",
-    "D03SCTEJ0JJ",
-)
 def train_model(
     across="session",
     n_sess=24,
